@@ -11,8 +11,14 @@
     "prepush": "ava test"
   },
   "lint-staged": {
-    "*.{css,md,json}": ["prettier --write", "git add"],
-    "*.{js}": ["eslint --fix", "git add"]
+    "*.{css,md,json}": [
+      "prettier --write",
+      "git add"
+    ],
+    "*.{js}": [
+      "eslint --fix",
+      "git add"
+    ]
   },
   "engines": {
     "node": ">=10"
@@ -21,7 +27,9 @@
     "type": "git",
     "url": "git://github.com/devschile/huemul.git"
   },
-  "keywords": ["hubot"],
+  "keywords": [
+    "hubot"
+  ],
   "author": "Huemul",
   "private": true,
   "bugs": {
@@ -126,6 +134,6 @@
     "husky": "0.14.3",
     "lint-staged": "9.4.2",
     "nock": "9.2.6",
-    "prettier": "1.12.1"
+    "prettier": "2.0.5"
   }
 }

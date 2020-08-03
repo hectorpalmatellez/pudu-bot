@@ -87,13 +87,11 @@ const diarios = {
     noSlashes: false
   },
   tercera: {
-    url:
-      'https://edition.pagesuite-professional.co.uk/get_image.aspx?w=550&pbid=33084897-397a-48cc-b3c0-3ce1ec447137&pnum=01&nocache=#DATE#',
+    url: 'https://kiosco.latercera.com/latest-issue-cover-image?collection=lt_diario_la_tercera_6_30&nocache=#DATE#',
     noSlashes: true
   },
   cuarta: {
-    url:
-      'https://edition.pagesuite-professional.co.uk/get_image.aspx?w=550&pbid=a94a1c16-2ebc-4ecc-b2bc-d60709ea4c26&pnum=01&nocache=#DATE#',
+    url: 'https://kiosco.lacuarta.com/latest-issue-cover-image?collection=lc_diario_la_cuarta&nocache=#DATE#',
     noSlashes: true
   },
   estrellaarica: {
@@ -301,46 +299,48 @@ const getPortada = (res, diario) => {
         const fecha = moment().subtract(daysPast, 'days')
         testUrl = diario.url.replace('#DATE#', formatDate(fecha, diario.noSlashes))
         return new Promise((resolve, reject) => {
-          res
-            .http(testUrl)
-            .timeout(2000)
-            .get()((err, response, body) => {
-              if (err) return reject(err)
-              switch (response.statusCode) {
-                case 404:
-                  daysPast++
-                  resolve(testUrl)
-                  break
-                case 200:
-                  ready = false
-                  if (testUrl === endpointHxh) {
-                    try {
-                      var jsonHxh = JSON.parse(body)
-                      testUrl = jsonHxh[0].esPortadaFalsa || diario.forcePortada ? jsonHxh[3].img : jsonHxh[0].img
-                      const dateFromHxh = testUrl && testUrl.split('/')[4]
-                      dateFromHxh && sendPortadaDate(res, moment(dateFromHxh, 'DDMMYY').toDate())
-                      resolve(testUrl)
-                    } catch (err) {
-                      reject(err)
-                    }
-                  } else {
-                    sendPortadaDate(res, fecha)
+          res.http(testUrl).timeout(2000).get()((err, response, body) => {
+            if (err) return reject(err)
+            switch (response.statusCode) {
+              case 404:
+                daysPast++
+                resolve(testUrl)
+                break
+              case 200:
+                ready = false
+                if (testUrl === endpointHxh) {
+                  try {
+                    var jsonHxh = JSON.parse(body)
+                    testUrl = jsonHxh[0].esPortadaFalsa || diario.forcePortada ? jsonHxh[3].img : jsonHxh[0].img
+                    const dateFromHxh = testUrl && testUrl.split('/')[4]
+                    dateFromHxh && sendPortadaDate(res, moment(dateFromHxh, 'DDMMYY').toDate())
                     resolve(testUrl)
+                  } catch (err) {
+                    reject(err)
                   }
-                  break
-                default:
-                  resolve()
-                  break
-              }
-            })
+                } else {
+                  sendPortadaDate(res, fecha)
+                  resolve(testUrl)
+                }
+                break
+              case 302:
+                ready = false
+                sendPortadaDate(res, fecha)
+                resolve(testUrl)
+                break
+              default:
+                resolve()
+                break
+            }
+          })
         })
       }
     }
   )
 }
 
-module.exports = robot => {
-  robot.respond(/portada (.*)/i, res => {
+module.exports = (robot) => {
+  robot.respond(/portada (.*)/i, (res) => {
     const nombre = res.match[1]
       .toLowerCase()
       .replace(/^(las |la |el |le |the |o |il )/, '')
@@ -361,11 +361,11 @@ module.exports = robot => {
       res.send(listaPortadas())
     } else if (nombre in diarios) {
       getPortada(res, diarios[nombre])
-        .then(result => {
+        .then((result) => {
           if (!result) return res.send('No hay portada disponible')
           res.send(result)
         })
-        .catch(err => {
+        .catch((err) => {
           robot.emit('error', err, res, 'portadas')
         })
     } else {
